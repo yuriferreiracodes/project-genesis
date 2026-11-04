@@ -1,0 +1,25 @@
+services:
+  backend:
+    build: ./backend
+    env_file: ./backend/.env
+    ports:
+      - "2024:2024"
+    volumes:
+      - ./backend:/app/backend
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    env_file: ./frontend/.env.local
+    environment:
+      LANGGRAPH_API_BASE: http://backend:2024
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app/frontend
+      - /app/frontend/node_modules
+      - /app/frontend/.next
+      - ./models.yaml:/app/models.yaml:ro
+    depends_on:
+      - backend
+    restart: unless-stopped

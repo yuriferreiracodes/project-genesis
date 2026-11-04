@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --genesis-bg: #0c1010;
+  --genesis-panel: #1a2321;
+  --genesis-panel-raised: #212c29;
+  --genesis-line: #26302e;
+  --genesis-accent: #c6f566;
+  --genesis-text: #e8eee9;
+  --genesis-text-muted: #9aa6a0;
+}
+
+body {
+  background: var(--genesis-bg);
+  color: var(--genesis-text);
+  min-height: 100vh;
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background: rgba(198, 245, 102, 0.25);
+  color: #ffffff;
+}
+
+/* Thin, industrial scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #34413d transparent;
+}
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #34413d;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Lab grid: faint blueprint lines + scanlines */
+.genesis-grid::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(232, 238, 233, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(232, 238, 233, 0.025) 1px, transparent 1px),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.18) 0, rgba(0, 0, 0, 0.18) 1px, transparent 1px, transparent 3px);
+  background-size: 48px 48px, 48px 48px, 100% 3px;
+}
+
+.markdown-body {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--genesis-text);
+  display: grid;
+  gap: 0.75rem;
+}
+
+.markdown-body p {
+  margin: 0;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  margin: 0;
+  padding-left: 1.15rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.markdown-body li::marker {
+  color: var(--genesis-text-muted);
+}
+
+.markdown-body strong {
+  color: #ffffff;
+}
+
+.markdown-body blockquote {
+  margin: 0;
+  border-left: 2px solid rgba(198, 245, 102, 0.5);
+  padding-left: 0.75rem;
+  color: var(--genesis-text-muted);
+}

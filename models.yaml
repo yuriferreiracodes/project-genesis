@@ -1,0 +1,14 @@
+# Catalog of OpenRouter models used by Project Genesis
+# Cost values are examples (USD per 1M tokens). Adjust as needed.
+- id: google/gemini-2.5-flash
+  label: Gemini 2.5 Flash
+  input_cost: 0.30
+  output_cost: 2.50
+- id: x-ai/grok-4.3
+  label: Grok 4.3
+  input_cost: 1.25
+  output_cost: 2.50
+- id: moonshotai/kimi-k2-thinking
+  label: Kimi K2 Thinking
+  input_cost: 0.60
+  output_cost: 2.50
