@@ -8,7 +8,7 @@
   label: Grok 4.3
   input_cost: 1.25
   output_cost: 2.50
-- id: moonshotai/kimi-k2-thinking
-  label: Kimi K2 Thinking
-  input_cost: 0.60
-  output_cost: 2.50
+- id: deepseek/deepseek-v4.1-flash-1017
+  label: Deepseek 4.1 Flash
+  input_cost: 0.06
+  output_cost: 0.50
