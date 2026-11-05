@@ -1,124 +1,95 @@
-# Project Genesis - Fastapp (Studio‑Only)
-Local execution via LangGraph Studio + Next.js. LangChain 1.0 agent (`create_agent`), with dynamic model/Tavily and simple logs.
+# Project Genesis 🤖
 
-![Project Genesis – Local Execution (Studio + Next.js)](./sistema_local.png)
-Frontend and backend running.
-
-## Overview
-- Backend (`backend/`): LangChain 1.0 agent exposed to LangGraph Studio by `backend/langgraph.json`. A custom middleware applies the dynamic model/Tavily (SystemMessage “settings” and `config.configurable`).
-- Frontend (`frontend/`): Next.js 15 + React 19. Chat and history UI; it consumes the LangGraph Studio API (port 2024 by default).
-- Model catalog: `models.yaml` in the root (used by the frontend in `/api/models`).
-
-## Project Structure
-- Node.js ≥ 18 (LTS recommended) – for the Next.js frontend
-- npm ≥ 9 (comes with Node) – install/run the frontend
-- Python ≥ 3.11 – for the agent (backend) in LangGraph
-- Free LangSmith account ([langsmith.com](https://smith.langchain.com)) with an active workspace – required to authenticate LangGraph Studio
-- langgraph CLI (1.0) – `langgraph dev` command
-- make – convenience shortcut (macOS/Linux; on Windows use Git Bash/MSYS2/WSL)
-
-### Backend Python dependencies
-In the `backend/` directory, create a virtualenv called `.venv` and install the minimum agent dependencies listed in `requirements.txt`:
+A multi-model AI chat app. Pick a model from a list, turn web search on or off, and switch both at any time, even in the middle of a conversation. Next.js frontend + LangChain agent served by LangGraph.
 
 ```
-cd backend
-python -m venv .venv
-source .venv/bin/activate  # Windows: .\.venv\Scripts\Activate.ps1
-pip install --upgrade pip
-pip install -r requirements.txt
+User → Next.js (/api) → LangGraph server → agent middleware (model + tools) → OpenRouter LLM
+                                                    ↓ (optional)
+                                              Tavily web search
 ```
 
-### Environment variables
+- **One agent, many models.** All models come from [OpenRouter](https://openrouter.ai), so one API key gives access to all of them. The list in the UI comes from `models.yaml` (id, label and example cost per 1M tokens). Add a model there and it shows up in the sidebar.
+- **Settings per message.** Each message sends the chosen model and the web search flag to the backend (`config.configurable` plus a small JSON "settings" message). The middleware in `backend/agent/middleware.py` reads them, creates the model, adds or removes the search tool, and removes the settings message before the LLM call.
+- **Web search (Tavily).** When it is on, the agent can call `tavily_search` (`backend/agent/tools.py`). When it is off, the tool is removed, tool calls are blocked, and the prompt tells the model not to invent search results.
+- **Threads.** Conversations are LangGraph threads. The frontend lists them, opens old ones and creates new ones through its own `/api/threads` routes, so the browser never talks to LangGraph directly.
+- **Keys stay on the server.** `OPENROUTER_API_KEY` and `TAVILY_API_KEY` live only in `backend/.env`.
+- **Current date.** The system prompt includes today's date, so the model can answer date questions.
 
-Create `backend/.env` with, at minimum:
+## Requirements
 
-```
-OPENROUTER_API_KEY=...
-TAVILY_API_KEY=...
-OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
-DEBUG_AGENT_LOGS=true
+- Python 3.11+
+- Node.js 18+ and npm
+- An [OpenRouter](https://openrouter.ai) API key
+- A [Tavily](https://tavily.com) API key (for web search)
+- Docker (optional)
 
-# Overrides for running in Studio (optional)
-STUDIO_MODEL_NAME=google/gemini-2.5-flash
-STUDIO_USE_TAVILY=true
-```
+## Configuration
 
-> **Warning!**
->
-> During development keep `STUDIO_USE_TAVILY="true"` in `backend/.env`; otherwise the frontend fails with `ValueError: Middleware returned unknown tool names:`.
->
-> For the frontend, copy `frontend/.env.local.example` to `.env.local` and adjust if needed:
-
-```
-LANGGRAPH_API_BASE=http://127.0.0.1:2024
-LANGGRAPH_ASSISTANT_ID=agent
-```
-
-## How to run (local with LangGraph Studio)
-
-1) Backend (LangGraph Studio)
-- Prerequisite: Python 3.11+ and the dependencies from `requirements.txt` installed
-- In the `backend/` directory, activate the virtualenv and run:
-  ```bash
-  langgraph dev
-  # Studio starts at http://127.0.0.1:2024
-  ```
-
-2) Frontend (Next.js)
 ```bash
-cd frontend
-npm install
-npm run dev
-```
-Open `http://localhost:3000`.
-
-## Makefile (shortcuts)
-
-```
-make help      # list targets
-make studio    # start LangGraph Studio in ./backend
-make frontend  # start Next.js in ./frontend
+cp backend/.env.example backend/.env                 # fill in OPENROUTER_API_KEY and TAVILY_API_KEY
+cp frontend/.env.local.example frontend/.env.local   # defaults work for local runs
 ```
 
-Before running, confirm that the virtualenv (`backend/.venv`) was created and filled with `pip install -r backend/requirements.txt`.
+| Variable | Where | What it does |
+|---|---|---|
+| `OPENROUTER_API_KEY` | backend | Key for all LLM calls |
+| `OPENROUTER_BASE_URL` | backend | OpenRouter API URL (default `https://openrouter.ai/api/v1`) |
+| `TAVILY_API_KEY` | backend | Key for web search |
+| `STUDIO_MODEL_NAME` | backend | Default model when the request does not choose one |
+| `STUDIO_USE_TAVILY` | backend | Default web search state. Keep it `true` in development |
+| `DEBUG_AGENT_LOGS` | backend | `true` prints model and tool decisions to the console |
+| `LANGGRAPH_API_BASE` | frontend | LangGraph server URL (default `http://127.0.0.1:2024`) |
+| `LANGGRAPH_ASSISTANT_ID` | frontend | Graph name from `backend/langgraph.json` (default `agent`) |
 
-### Running manually (two terminals)
+## Run locally
 
-1. **Backend (LangGraph Studio)**
-   ```bash
-   cd backend
-   source .venv/bin/activate  # or .\.venv\Scripts\Activate.ps1 on Windows
-   langgraph dev
-   ```
+With Docker:
 
-2. **Frontend (Next.js)**
-   ```bash
-   cd frontend
-   npm run dev
-   ```
-   The application is available at `http://localhost:3000`.
-
-## Notes
-- This version runs locally via LangGraph Studio.
-- The model and Tavily selection is sent by the frontend as a JSON SystemMessage (type "settings") and through `config.configurable`. The agent middleware applies and sanitizes it.
-
-## Repo Notes
-- The `frontend/.env.local` file is specific to the local environment and is also ignored by default.
-
-Agent logs:
-
-```
-DEBUG_AGENT_LOGS=true    # enables detailed agent logs (agent/agent.py)
+```bash
+docker compose up --build
+# frontend http://localhost:3000   backend http://localhost:2024
 ```
 
-## Basic Workflow
-1. Start LangGraph Studio in `backend/` (`make studio` or `langgraph dev`).
-2. Start the frontend (`make frontend` or `npm run dev`).
-3. Select the model and Tavily in the Sidebar; create a thread and send messages.
-4. The frontend injects the configuration (SystemMessage “settings” and `config.configurable`); the agent middleware applies it and calls the LLM.
+Without Docker (two terminals):
 
-## Useful commands
-- `npm run lint` (frontend) – validates Next/ESLint conventions.
-- `npm run build` (frontend) – production build of the app.
+```bash
+cd backend && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+.venv/bin/langgraph dev          # http://127.0.0.1:2024
 
----
+cd frontend && npm ci && npm run dev   # http://localhost:3000
+```
+
+Or use the Makefile shortcuts: `make studio` and `make frontend` (the Makefile uses zsh).
+
+## Checks
+
+```bash
+cd frontend && npm run lint && npm run build
+```
+
+## Project structure
+
+```
+backend/
+  agent/agent.py        # agent factory and exported graph
+  agent/middleware.py   # applies model + web search per request
+  agent/tools.py        # tavily_search tool
+  langgraph.json        # exposes the graph as "agent"
+frontend/
+  src/app/api/          # proxy routes to LangGraph + /api/models
+  src/components/       # chat, sidebar, history and UI parts
+  src/state/            # app state (sessions, messages, settings)
+models.yaml             # model catalog shown in the UI
+```
+
+## Notes / limits
+
+- This is a local development setup. The backend runs `langgraph dev`, which keeps threads in memory and in local files (`backend/.langgraph_api/`). History can be lost when the server restarts.
+- There is no login, no rate limit and no streaming. Each message waits for the full answer.
+- The backend accepts any model id the client sends. It does not check it against `models.yaml`.
+- Costs in `models.yaml` are only examples. Check current prices on OpenRouter.
+- There are no automated tests yet.
+
+## License
+
+See [LICENSE](./LICENSE).
